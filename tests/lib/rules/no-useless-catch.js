@@ -124,6 +124,11 @@ ruleTester.run("no-useless-catch", rule, {
                     throw err;
                 }
             `,
+			output: `
+                
+                    foo();
+                
+            `,
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
@@ -163,6 +168,11 @@ ruleTester.run("no-useless-catch", rule, {
                     /* some comment */
                     throw err;
                 }
+            `,
+			output: `
+                
+                    foo();
+                
             `,
 			errors: [
 				{
@@ -204,6 +214,13 @@ ruleTester.run("no-useless-catch", rule, {
                     } catch (e) {
                         throw e;
                     }
+                }
+            `,
+			output: `
+                async () => {
+                    
+                        await doSomething();
+                    
                 }
             `,
 			languageOptions: { ecmaVersion: 8 },
