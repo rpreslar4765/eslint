@@ -189,7 +189,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatchClause",
-					type: "CatchClause",
 				},
 			],
 		},
@@ -206,7 +205,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -225,7 +223,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatchClause",
-					type: "CatchClause",
 				},
 			],
 		},
@@ -243,7 +240,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -310,7 +306,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -334,7 +329,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -358,7 +352,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -382,7 +375,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -406,7 +398,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -432,7 +423,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -446,7 +436,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -460,7 +449,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -474,7 +462,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -500,7 +487,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -524,7 +510,6 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
 				},
 			],
 		},
@@ -548,7 +533,60 @@ ruleTester.run("no-useless-catch", rule, {
 			errors: [
 				{
 					messageId: "unnecessaryCatch",
-					type: "TryStatement",
+				},
+			],
+		},
+		{
+			code: `
+                foo()
+
+                try {
+                    [1, 2].forEach(doSomething)
+                } catch (e) {
+                    throw e
+                }
+
+                [3, 4].forEach(doSomething)
+            `,
+			output: `
+                foo()
+
+                {
+                    [1, 2].forEach(doSomething)
+                }
+
+                [3, 4].forEach(doSomething)
+            `,
+			errors: [
+				{
+					messageId: "unnecessaryCatch",
+				},
+			],
+		},
+		{
+			code: `
+                foo()
+
+                try {
+                    console.log({ a: 1, b: 2 })
+                } catch (e) {
+                    throw e
+                }
+
+                [3, 4].forEach(doSomething)
+            `,
+			output: `
+                foo()
+
+                {
+                    console.log({ a: 1, b: 2 })
+                }
+
+                [3, 4].forEach(doSomething)
+            `,
+			errors: [
+				{
+					messageId: "unnecessaryCatch",
 				},
 			],
 		},
