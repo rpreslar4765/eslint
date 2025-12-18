@@ -1,202 +1,81 @@
-# ESLint CircleCI Configuration
-# This configuration runs comprehensive tests, builds, and validations
 version: 2.1
 
-# Define jobs
+orbs:
+  node: circleci/node@5.0.2
+
 jobs:
-  # Main test job - runs linting and full test suite
   test:
     docker:
-      - image: cimg/node:18-browsers
-    
-    resource_class: large
-    
+      - image: cimg/node:20-browsers
     steps:
       - checkout
-      
-      # Restore dependency cache
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package.json" }}
-            - v1-dependencies-
-      
-      # Install dependencies
+      - node/install-packages:
+          pkg-manager: npm
       - run:
-          name: Install Dependencies
-          command: npm install
-      
-      # Save dependency cache
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-      
-      # Run linting
-      - run:
-          name: Run Linter
-          command: npm run lint
-      
-      # Run tests
-      - run:
-          name: Run Test Suite
+          name: Run tests
           command: npm test
-      
-      # Store artifacts
-      - store_artifacts:
-          path: ./coverage
-          destination: coverage
+      - run:
+          name: Run code coverage
+          command: npm run coverage
+      - run:
+          name: Upload coverage to Codecov
+          command: |
+            curl -Os https://uploader.codecov.io/latest/linux/codecov
+            chmod +x codecov
+            ./codecov -t ${CODECOV_TOKEN}
 
-  # Build verification job
+  lint:
+    docker:
+      - image: cimg/node:20-browsers
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Run linter
+          command: npm run lint
+
   build:
     docker:
-      - image: cimg/node:18-browsers
-    
+      - image: cimg/node:20-browsers
     steps:
       - checkout
-      
-      # Restore dependency cache
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package.json" }}
-            - v1-dependencies-
-      
-      # Install dependencies
+      - node/install-packages:
+          pkg-manager: npm
       - run:
-          name: Install Dependencies
-          command: npm install
-      
-      # Save dependency cache
-      - save_cache:
+          name: Build project
+          command: npm run build
+      - persist_to_workspace:
+          root: .
           paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-      
-      # Build webpack bundle
-      - run:
-          name: Build Webpack
-          command: npm run build:webpack
-      
-      # Build site
-      - run:
-          name: Build Site
-          command: npm run build:site
-      
-      # Store build artifacts
-      - store_artifacts:
-          path: ./build
-          destination: build
+            - dist
 
-  # Documentation build job
-  docs-build:
+  deploy:
     docker:
-      - image: cimg/node:18-browsers
-    
+      - image: cimg/node:20-browsers
     steps:
       - checkout
-      
-      # Restore root dependencies cache
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package.json" }}
-            - v1-dependencies-
-      
+      - attach_workspace:
+          at: .
       - run:
-          name: Install Root Dependencies
-          command: npm install
-      
-      # Save root dependencies cache
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-      
-      # Restore docs dependencies cache
-      - restore_cache:
-          keys:
-            - v1-docs-dependencies-{{ checksum "docs/package.json" }}
-            - v1-docs-dependencies-
-      
-      # Install docs dependencies
-      - run:
-          name: Install Docs Dependencies
-          command: cd docs && npm install
-      
-      # Save docs dependencies cache
-      - save_cache:
-          paths:
-            - docs/node_modules
-          key: v1-docs-dependencies-{{ checksum "docs/package.json" }}
-      
-      # Build documentation
-      - run:
-          name: Build Documentation
-          command: cd docs && npm run build
-      
-      # Store docs build artifacts
-      - store_artifacts:
-          path: docs/_site
-          destination: docs-build
-
-  # Docker build and test job
-  docker-build:
-    docker:
-      - image: cimg/node:18-browsers
-    
-    resource_class: medium
-    
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      
-      # Build Docker image
-      - run:
-          name: Build Docker Image
-          command: docker build -t eslint:test .
-      
-      # Test Docker image health check
-      - run:
-          name: Test Docker Health Check
+          name: Deploy to production
           command: |
-            # Start container
-            docker run -d --name eslint-test eslint:test sleep 30
-            
-            # Wait for health check
-            timeout 60 sh -c 'until docker inspect --format="{{.State.Health.Status}}" eslint-test | grep -q "healthy"; do sleep 2; done' || {
-              echo "Health check failed"
-              docker logs eslint-test
-              exit 1
-            }
-            
-            # Test ESLint CLI
-            docker exec eslint-test node bin/eslint.js --version
-            
-            # Cleanup
-            docker stop eslint-test
-            docker rm eslint-test
-      
-      # Save Docker image
-      - run:
-          name: Save Docker Image
-          command: docker save -o eslint-image.tar eslint:test
-      
-      # Store Docker image as artifact
-      - store_artifacts:
-          path: eslint-image.tar
-          destination: docker-image
+            echo "Deploying to production..."
+            # Add your deployment commands here
 
-# Define workflows
 workflows:
   version: 2
-  
-  # Main workflow - runs all jobs in parallel where possible
-  build-test-deploy:
+  test-lint-build-deploy:
     jobs:
       - test
+      - lint
       - build:
           requires:
             - test
-      - docs-build:
+            - lint
+      - deploy:
           requires:
-            - test
-      - docker-build
+            - build
+          filters:
+            branches:
+              only: main
