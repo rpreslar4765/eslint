@@ -1,7 +1,7 @@
 # ESLint Container - Multi-stage build for optimized production image
 
 # Build stage
-FROM node:18-slim AS builder
+FROM node:20-slim AS builder
 
 # Set work directory
 WORKDIR /app
@@ -21,7 +21,7 @@ RUN npm install
 COPY . .
 
 # Runtime stage
-FROM node:18-slim AS runtime
+FROM node:20-slim AS runtime
 
 # Set work directory
 WORKDIR /app

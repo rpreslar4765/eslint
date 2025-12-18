@@ -7,7 +7,7 @@ jobs:
   # Main test job - runs linting and full test suite
   test:
     docker:
-      - image: cimg/node:18-browsers
+      - image: cimg/node:20-browsers
     
     resource_class: large
     
@@ -49,7 +49,7 @@ jobs:
   # Build verification job
   build:
     docker:
-      - image: cimg/node:18-browsers
+      - image: cimg/node:20-browsers
     
     steps:
       - checkout
@@ -89,7 +89,7 @@ jobs:
   # Documentation build job
   docs-build:
     docker:
-      - image: cimg/node:18-browsers
+      - image: cimg/node:20-browsers
     
     steps:
       - checkout
@@ -140,7 +140,7 @@ jobs:
   # Docker build and test job
   docker-build:
     docker:
-      - image: cimg/node:18-browsers
+      - image: cimg/node:20-browsers
     
     resource_class: medium
     
