@@ -65,6 +65,12 @@ jobs:
           name: Install Dependencies
           command: npm install
       
+      # Save dependency cache
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      
       # Build webpack bundle
       - run:
           name: Build Webpack
@@ -74,6 +80,11 @@ jobs:
       - run:
           name: Build Site
           command: npm run build:site
+      
+      # Store build artifacts
+      - store_artifacts:
+          path: ./build
+          destination: build
 
   # Documentation build job
   docs-build:
@@ -87,10 +98,17 @@ jobs:
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
       
       - run:
           name: Install Root Dependencies
           command: npm install
+      
+      # Save root dependencies cache
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
       
       # Restore docs dependencies cache
       - restore_cache:
@@ -123,6 +141,8 @@ jobs:
   docker-build:
     docker:
       - image: cimg/node:18-browsers
+    
+    resource_class: medium
     
     steps:
       - checkout
