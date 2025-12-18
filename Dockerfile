@@ -1,70 +1,39 @@
-# ESLint Container - Multi-stage build for optimized production image
+# syntax=docker/dockerfile:1
 
 # Build stage
-FROM node:18-slim AS builder
+FROM node:20-slim AS builder
 
-# Set work directory
 WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy package files first for better layer caching
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy rest of the application files
-COPY . .
-
-# Runtime stage
-FROM node:18-slim AS runtime
-
-# Set work directory
-WORKDIR /app
-
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user for security
-RUN groupadd -r eslint && useradd -r -g eslint eslint
 
 # Copy package files
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-# Install production dependencies only
-RUN npm install --omit=dev && npm cache clean --force
+# Install dependencies
+RUN npm ci --only=production
 
-# Copy application files from builder
-COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/conf ./conf
-COPY --from=builder /app/messages ./messages
+# Copy source code
+COPY . .
 
-# Change ownership to non-root user
-RUN chown -R eslint:eslint /app
+# Build if needed (uncomment if you have a build step)
+# RUN npm run build
 
-# Switch to non-root user
+# Remove dev dependencies
+RUN npm prune --production
+
+# Runtime stage
+FROM node:20-slim AS runtime
+
+WORKDIR /app
+
+# Copy built application from builder
+COPY --from=builder /app .
+
+# Create a non-root user
+RUN useradd -m -u 1001 eslint && chown -R eslint:eslint /app
 USER eslint
 
-# Health check - validate ESLint CLI works
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node bin/eslint.js --version || exit 1
+# Expose port if needed
+EXPOSE 3000
 
-# Metadata labels (applied to final image only)
-LABEL maintainer="ESLint Team"
-LABEL description="ESLint - An AST-based pattern checker for JavaScript"
-LABEL org.opencontainers.image.title="ESLint"
-LABEL org.opencontainers.image.description="An AST-based pattern checker for JavaScript"
-LABEL org.opencontainers.image.url="https://eslint.org"
-LABEL org.opencontainers.image.source="https://github.com/eslint/eslint"
-LABEL org.opencontainers.image.vendor="ESLint Team"
-LABEL org.opencontainers.image.licenses="MIT"
-
-# Default command - run ESLint help
-CMD ["node", "bin/eslint.js", "--help"]
+# Start the application
+CMD ["node", "index.js"]
