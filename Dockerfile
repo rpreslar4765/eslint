@@ -3,11 +3,6 @@
 # Build stage
 FROM node:18-slim AS builder
 
-# Add metadata labels
-LABEL maintainer="ESLint Team"
-LABEL description="ESLint - An AST-based pattern checker for JavaScript"
-LABEL version="10.0.0-alpha.0"
-
 # Set work directory
 WORKDIR /app
 
@@ -27,11 +22,6 @@ COPY . .
 
 # Runtime stage
 FROM node:18-slim AS runtime
-
-# Add metadata labels
-LABEL maintainer="ESLint Team"
-LABEL description="ESLint - An AST-based pattern checker for JavaScript"
-LABEL version="10.0.0-alpha.0"
 
 # Set work directory
 WORKDIR /app
@@ -66,7 +56,9 @@ USER eslint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD node bin/eslint.js --version || exit 1
 
-# Expose metadata
+# Metadata labels (applied to final image only)
+LABEL maintainer="ESLint Team"
+LABEL description="ESLint - An AST-based pattern checker for JavaScript"
 LABEL org.opencontainers.image.title="ESLint"
 LABEL org.opencontainers.image.description="An AST-based pattern checker for JavaScript"
 LABEL org.opencontainers.image.url="https://eslint.org"

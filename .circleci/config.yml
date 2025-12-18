@@ -149,7 +149,7 @@ jobs:
             }
             
             # Test ESLint CLI
-            docker exec eslint-test npx eslint --version
+            docker exec eslint-test node bin/eslint.js --version
             
             # Cleanup
             docker stop eslint-test
